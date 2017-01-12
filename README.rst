@@ -15,6 +15,7 @@ It also contains a Pipeline class for building custom pipelines that include
 AstrOmatic codes that can be used to process large datasets.
 
 See the full `documentation`_ for more information.
+sergotail fork is intented to upgrade this api.
 
 
 Status reports for developers
