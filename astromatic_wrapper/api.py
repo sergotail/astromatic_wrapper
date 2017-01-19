@@ -7,23 +7,24 @@ import subprocess
 import os
 import logging
 import warnings
-import traceback
+# import traceback
 from collections import OrderedDict
 
 logger = logging.getLogger('astromatic.api')
 
 codes = {
-    #'Eye': 'eye', 
-    #'MissFITS': 'missfits', 
-    'PSFEx': 'psfex', 
-    'SCAMP': 'scamp', 
-    'SExtractor': 'sex', 
-    #'SkyMaker': '', 
-    #'STIFF': 'stiff',
-    #'Stuff': '',
+    # 'Eye': 'eye',
+    # 'MissFITS': 'missfits',
+    'PSFEx': 'psfex',
+    'SCAMP': 'scamp',
+    'SExtractor': 'sex',
+    # 'SkyMaker': '',
+    # 'STIFF': 'stiff',
+    # 'Stuff': '',
     'SWarp': 'swarp',
-    #'WeightWatcher': 'ww'
+    # 'WeightWatcher': 'ww'
 }
+
 
 def run_sex(pipeline, step_id, files, api_kwargs={}, frames=[]):
     """
@@ -41,7 +42,7 @@ def run_sex(pipeline, step_id, files, api_kwargs={}, frames=[]):
             * image: filename of the fits image (required)
             * dqmask: filename of a bad mixel mask for the given image (optional)
             * wtmap: filename of a weight map for the given image (optional)
-    kwargs: dict
+    api_kwargs: dict
         Keyword arguements to pass to ``atrotoyz.Astromatic.run`` or
         ``astrotoyz.Astromatic.run_sex_frames``
     frames: list of integers (optional)
@@ -81,15 +82,16 @@ def run_sex(pipeline, step_id, files, api_kwargs={}, frames=[]):
         if 'WRITE_XML' not in api_kwargs['config']:
             api_kwargs['config']['WRITE_XML'] = 'Y'
         if 'XML_NAME' not in api_kwargs['config']:
-            api_kwargs['config']['XML_NAME'] = os.path.join(pipeline.paths['log'], 
-                '{0}.sex.log.xml'.format(step_id))
+            api_kwargs['config']['XML_NAME'] = os.path.join(pipeline.paths['log'],
+                                                            '{0}.sex.log.xml'.format(step_id))
     sex = Astromatic(**api_kwargs)
-    if len(frames)==0:
+    if not len(frames):
         result = sex.run(files['image'])
     else:
         result = sex.run_frames(files['image'], 'SExtractor', frames, False)
     return result
-    
+
+
 def run_scamp(pipeline, step_id, catalogs, api_kwargs={}, save_catalog=None):
     """
     Run SCAMP with a specified set of parameters
@@ -139,12 +141,13 @@ def run_scamp(pipeline, step_id, catalogs, api_kwargs={}, save_catalog=None):
         if 'WRITE_XML' not in api_kwargs['config']:
             api_kwargs['config']['WRITE_XML'] = 'Y'
         if 'XML_NAME' not in api_kwargs['config']:
-            api_kwargs['config']['XML_NAME'] = os.path.join(pipeline.paths['log'], 
-                '{0}.scamp.log.xml'.format(step_id))
+            api_kwargs['config']['XML_NAME'] = os.path.join(pipeline.paths['log'],
+                                                            '{0}.scamp.log.xml'.format(step_id))
     scamp = Astromatic(**api_kwargs)
     result = scamp.run(catalogs)
     return result
-    
+
+
 def run_swarp(pipeline, step_id, filenames, api_kwargs, frames=[]):
     """
     Run SWARP with a specified set of parameters
@@ -189,21 +192,22 @@ def run_swarp(pipeline, step_id, filenames, api_kwargs, frames=[]):
         api_kwargs['config'] = OrderedDict()
     if 'RESAMPLE_DIR' not in api_kwargs['config']:
         api_kwargs['config']['RESAMPLE_DIR'] = api_kwargs['temp_path']
-    #if 'IMAGEOUT_NAME' not in api_kwargs['config']:
+    # if 'IMAGEOUT_NAME' not in api_kwargs['config']:
     #    raise PipelineError('Must include a name for the new stacked image')
     if 'log' in pipeline.paths:
         if 'WRITE_XML' not in api_kwargs['config']:
             api_kwargs['config']['WRITE_XML'] = 'Y'
         if 'XML_NAME' not in api_kwargs['config']:
-            api_kwargs['config']['XML_NAME'] = os.path.join(pipeline.paths['log'], 
-                '{0}.swarp.log.xml'.format(step_id))
+            api_kwargs['config']['XML_NAME'] = os.path.join(pipeline.paths['log'],
+                                                            '{0}.swarp.log.xml'.format(step_id))
     swarp = Astromatic(**api_kwargs)
-    if len(frames)==0:
+    if len(frames) == 0:
         result = swarp.run(filenames)
     else:
         result = swarp.run_frames(filenames, 'SWarp', frames, False)
     return result
-    
+
+
 def run_psfex(pipeline, step_id, catalogs, api_kwargs={}):
     """
     Run PSFEx with a specified set of parameters.
@@ -249,21 +253,23 @@ def run_psfex(pipeline, step_id, catalogs, api_kwargs={}):
         if 'WRITE_XML' not in api_kwargs['config']:
             api_kwargs['config']['WRITE_XML'] = 'Y'
         if 'XML_NAME' not in api_kwargs['config']:
-            api_kwargs['config']['XML_NAME'] = os.path.join(pipeline.paths['log'], 
-                '{0}.psfex.log.xml'.format(step_id))
+            api_kwargs['config']['XML_NAME'] = os.path.join(pipeline.paths['log'],
+                                                            '{0}.psfex.log.xml'.format(step_id))
     psfex = Astromatic(**api_kwargs)
     result = psfex.run(catalogs)
     return result
 
+
 class AstromaticError(Exception):
     pass
+
 
 class Astromatic:
     """
     Class to hold config options for an Astrometric code. 
     """
-    def __init__(self, code, temp_path=None, config={}, config_file=None, store_output=False, 
-            **kwargs):
+
+    def __init__(self, code, temp_path=None, config={}, config_file=None, store_output=False, **kwargs):
         """
         Initialize a particular astromatic code with a given set of configurations.
         
@@ -286,15 +292,14 @@ class Astromatic:
         """
         self.code = code
         if code not in codes:
-            warnings.warn("'{0} not in Astromatic codes, you will need to specify " +
-                "a 'cmd' to run".format(code))
+            warnings.warn("'{0} not in Astromatic codes, you will need to specify " + "a 'cmd' to run".format(code))
         self.temp_path = temp_path
         self.config = config
         self.config_file = config_file
         self.store_output = store_output
         for k, v in kwargs.items():
             setattr(self, k, v)
-    
+
     def build_cmd(self, filenames, **kwargs):
         """
         Build a command to run an astromatic code.
@@ -331,52 +336,52 @@ class Astromatic:
         logger.debug("kwargs used to build command:\n{0}".format(kwargs))
         # If the user did not specify a params file, create one in the temp directory and 
         # update the config parameters
-        if kwargs['code']=='SExtractor':
+        if kwargs['code'] == 'SExtractor':
             if 'params' in kwargs:
                 if 'PARAMETERS_NAME' in kwargs['config']:
                     warnings.warn("Multiple parameter files specified, using 'params'")
                 if 'temp_path' not in kwargs:
                     raise AstromaticError(
-                        "You must either supply a 'PARAMETERS_NAME' in 'config' or "+
+                        "You must either supply a 'PARAMETERS_NAME' in 'config' or " +
                         "a 'temp_path' to store the temporary parameters file")
                 param_name = os.path.join(kwargs['temp_path'], 'sex.param')
                 f = open(param_name, 'w')
                 for p in kwargs['params']:
-                    f.write(p+'\n')
+                    f.write(p + '\n')
                 f.close()
                 kwargs['config']['PARAMETERS_NAME'] = param_name
             elif 'PARAMETERS_NAME' not in kwargs['config']:
                 raise AstromaticError(
-                    "To run SExtractor yo must either supply a 'params' list of parameters "+
+                    "To run SExtractor yo must either supply a 'params' list of parameters " +
                     "or a config keyword 'PARAMETERS_NAME' that points to a parameters file")
         # Get the correct command for the given code (if one is not specified)
         if 'cmd' not in kwargs:
             if kwargs['code'] not in codes:
                 raise AstromaticError(
-                    "You must either supply a valid astromatic 'code' name or "+
+                    "You must either supply a valid astromatic 'code' name or " +
                     "a 'cmd' to run")
             cmd = codes[kwargs['code']]
         else:
             cmd = kwargs['cmd']
-        if cmd[-1]!=' ':
+        if cmd[-1] != ' ':
             cmd += ' '
         # Append the filename(s) that are run by the code
         cmd += ' '.join(filenames)
         # If the user specified a config file, use it
         if kwargs['config_file'] is not None:
-            cmd += ' -c '+kwargs['config_file']
+            cmd += ' -c ' + kwargs['config_file']
         # Add on any user specified parameters
         for param in kwargs['config']:
             if isinstance(kwargs['config'][param], bool):
                 if kwargs['config'][param]:
-                    val='Y'
+                    val = 'Y'
                 else:
-                    val='N'
+                    val = 'N'
             else:
                 val = kwargs['config'][param]
-            cmd += ' -'+param+' '+val
-        return (cmd, kwargs)
-    
+            cmd += ' -' + param + ' ' + val
+        return cmd, kwargs
+
     def _run_cmd(self, this_cmd, store_output=False, xml_name=None, raise_error=True, frame=None):
         """
         Execute a command to run an astromatic code. Since this allows a user to
@@ -412,12 +417,11 @@ class Astromatic:
                 If the WRITE_XML parameter is ``True`` then a table of warnings detected
                 in the code is returned
         """
-        result = {'status':'success'}
+        result = {'status': 'success'}
         # Run code
         logger.info('cmd:\n{0}\n'.format(this_cmd))
         if store_output:
-            p = subprocess.Popen(this_cmd, shell=True, stdout=subprocess.PIPE, 
-                stderr=subprocess.STDOUT)
+            p = subprocess.Popen(this_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             output = p.stdout.readlines()
             result['output'] = output
             for line in output:
@@ -427,13 +431,13 @@ class Astromatic:
                     break
         else:
             status = subprocess.call(this_cmd, shell=True)
-            if status>0:
+            if status > 0:
                 result['status'] = 'error'
                 if xml_name is not None:
                     from astropy.io.votable import parse
                     votable = parse(xml_name)
                     for param in votable.resources[0].resources[0].params:
-                        if param.name=='Error_Msg':
+                        if param.name == 'Error_Msg':
                             result['error_msg'] = param.value
         # Log any warnings generated by the astromatic code
         if xml_name is not None:
@@ -442,7 +446,7 @@ class Astromatic:
             # be a FITS_LDAC file, astropy does not rad this properly and it
             # causes the read to crash. This code removes the link to the FITS_LDAC file
             if frame is not None:
-                xml_name = xml_name.replace('.xml','-{0}.xml'.format(frame))
+                xml_name = xml_name.replace('.xml', '-{0}.xml'.format(frame))
             if self.code == 'SExtractor':
                 f = open(xml_name, 'r')
                 all_lines = f.readlines()
@@ -454,7 +458,7 @@ class Astromatic:
                     elif '</DATA>' in line.upper():
                         f.write('</DATA>\n')
                 f.close()
-            
+
             from astropy.table import Table
             from astropy.io.votable import parse
             # Sometimes the xml file does not fit the VOTABLE standard,
@@ -468,11 +472,11 @@ class Astromatic:
         # Raise an Exception if appropriate
         if result['status'] == 'error' and raise_error:
             error_msg = "Error in '{0}' execution".format(self.code)
-            if 'error_msg' in result:
+            if 'error_msg' in result.keys():
                 error_msg += ': {0}'.format(result['error_msg'])
             raise AstromaticError(error_msg)
         return result
-    
+
     def run(self, filenames, store_output=False, raise_error=True, **kwargs):
         """
         Build the command and run the code with a given set of options. If one of the
@@ -516,16 +520,15 @@ class Astromatic:
                 in the code is returned
         """
         this_cmd, kwargs = self.build_cmd(filenames, **kwargs)
-        if ('WRITE_XML' in kwargs['config'] and 'XML_NAME' in kwargs['config']
-                        and kwargs['config']['WRITE_XML'] == 'Y'):
+        if ('WRITE_XML' in kwargs['config'] and 'XML_NAME' in kwargs['config'] and
+                    kwargs['config']['WRITE_XML'] == 'Y'):
             xml_name = kwargs['config']['XML_NAME']
         else:
             xml_name = None
-        
+
         return self._run_cmd(this_cmd, store_output, xml_name, raise_error)
-    
-    def run_frames(self, filenames, code=None, frames=[1], raise_error=True,
-            **kwargs):
+
+    def run_frames(self, filenames, code=None, frames=[1], raise_error=True, **kwargs):
         """
         If the user is running sextractor on an individual frame, this command will
         correctly add the frame to the image filename, flag filename, and weightmap filename
@@ -579,53 +582,53 @@ class Astromatic:
                 flag_img = kwargs['config']['FLAG_IMAGE']
             if 'WEIGHT_IMAGE' in kwargs['config']:
                 weight_img = kwargs['config']['WEIGHT_IMAGE']
-        elif code !='SWarp':
+        elif code != 'SWarp':
             raise AstromaticError("The code you have specified is not currently supported "
-                "using individual frames")
-        if('WRITE_XML' in kwargs['config'] and kwargs['config']['WRITE_XML'] and
-                'XML_NAME' in kwargs['config']):
+                                  "using individual frames")
+        if ('WRITE_XML' in kwargs['config'] and kwargs['config']['WRITE_XML'] and
+                    'XML_NAME' in kwargs['config']):
             xml_name = kwargs['config']['XML_NAME']
         else:
             xml_name = None
         # Build the command
         this_cmd, kwargs = self.build_cmd(filenames, code=code, **kwargs)
-        
+
         # For each frame, modify the command to include the frames and run the code
         all_warnings = None
         result = {'status': 'success'}
         for frame in frames:
             new_cmd = this_cmd
-            frame_str = '['+str(frame)+']'
-            
+            frame_str = '[' + str(frame) + ']'
+
             # Convert all multi-extension files to filenames with the same frame specified
             if not isinstance(filenames, list):
                 filenames = [filenames]
             for filename in filenames:
-                new_cmd = new_cmd.replace(filename, filename+frame_str)
+                new_cmd = new_cmd.replace(filename, filename + frame_str)
             if flag_img is not None:
-                new_cmd = new_cmd.replace(flag_img, flag_img+frame_str)
+                new_cmd = new_cmd.replace(flag_img, flag_img + frame_str)
             if weight_img is not None:
-                new_cmd = new_cmd.replace(weight_img, weight_img+frame_str)
+                new_cmd = new_cmd.replace(weight_img, weight_img + frame_str)
             if xml_name is not None:
                 new_cmd = new_cmd.replace(xml_name, xml_name.replace(
-                    '.xml', '-'+str(frame)+'.xml'))
+                    '.xml', '-' + str(frame) + '.xml'))
             # Run the code
             frame_result = self._run_cmd(new_cmd, False, xml_name, raise_error, frame=str(frame))
-            
+
             # Combine all warnings into a single table
-            if 'warnings' in frame_result and len(frame_result['warnings'])>0:
+            if 'warnings' in frame_result and len(frame_result['warnings']) > 0:
                 from astropy.table import vstack
-                warnings = frame_result['warnings']
-                warnings['frame'] = frame
+                warns = frame_result['warnings']
+                warns['frame'] = frame
                 if all_warnings is None:
-                    all_warnings = warnings
+                    all_warnings = warns
                 else:
-                    all_warnings = vstack([all_warnings, warnings])
+                    all_warnings = vstack([all_warnings, warns])
             if frame_result['status'] != 'success':
                 result.update(frame_result)
         result['warnings'] = all_warnings
         return result
-    
+
     def get_version(self, cmd=None):
         """
         Get the version of the currently loaded astromatic code
@@ -638,7 +641,8 @@ class Astromatic:
             just the code to run (for example 'sex', 'scamp', 'swarp', 'psfex', ...)
             but occationally if the user doesn't have root privilages this may be
             another location (for example ``~/astromatic/bin/sex``).
-        Retruns
+
+        Returns
         -------
         version: str
             Version of the specified astromatic code
@@ -651,22 +655,23 @@ class Astromatic:
                 raise AstromaticError(
                     "You must either supply a valid astromatic 'code' name or a 'cmd'")
             cmd = codes[self.code]
-        if cmd[-1]!=' ':
+        if cmd[-1] != ' ':
             cmd += ' '
         cmd += '-v'
         try:
-            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, 
-                stderr=subprocess.STDOUT)
+            p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         except:
             raise AstromaticError("Unable to run '{0}'. "
-                "Please check that it is installed correctly".format(cmd))
+                                  "Please check that it is installed correctly".format(cmd))
+        date = None
+        version = None
         for line in p.stdout.readlines():
             line_split = line.split()
             line_split = map(lambda x: x.lower(), line_split)
             if 'version' in line_split:
                 version_idx = line_split.index('version')
-                version = line_split[version_idx+1]
-                date = line_split[version_idx+2]
+                version = line_split[version_idx + 1]
+                date = line_split[version_idx + 2]
                 date = date.lstrip('(').rstrip(')')
                 break
         return version, date
